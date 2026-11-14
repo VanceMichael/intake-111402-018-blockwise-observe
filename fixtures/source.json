@@ -1,0 +1,27 @@
+{
+  "exchanges": [
+    {
+      "path": "/resources",
+      "method": "GET",
+      "body": {
+        "items": [
+          {
+            "uri": "/r/temp",
+            "value": 20,
+            "unit": "Cel"
+          }
+        ]
+      },
+      "requires": {},
+      "sets": {},
+      "status": 200,
+      "query": {}
+    }
+  ],
+  "cases": {
+    "block-resize": [],
+    "new-observation": [],
+    "expired": [],
+    "cancelled": []
+  }
+}
