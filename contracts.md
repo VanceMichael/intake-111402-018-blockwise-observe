@@ -11,3 +11,11 @@ GET /resources 返回 URI 和当前摘要；POST /request 接受 uri、token、o
 ## 收存约定
 
 当前适配器 collect(client) 返回带字符串 id 的原件行。Archive.put(rows, provenance) 按实际内容和来源生成摘要，保留不同内容。该原件归档不自动决定业务当前值、引用已解析、区间完整或远端已确认；业务投影与领取状态需要各自维护。GET /records 保留兼容，不将未知状态伪造为成功。
+
+## 观察采集约定（src/observer.mjs）
+
+ResourceObserver 为单个资源维护订阅身份四元组：令牌 token、24 位环回观察序号 observe、表示 ETag 与分块字节偏移。续块请求携带 ifMatch=当前 ETag，只有同一 observe+ETag 的全部分块按字节偏移连续收齐后才发布记录（kind='observation'）；任一块出现缺口、ETag 不符或 4.12 前置条件失败时，旧表示整体作废并从偏移 0 重领或等待新通知，绝不发布新旧拼接的 JSON。
+
+环回序号按 RFC 7641 模 2^24 有符号距离比较：同序号同 ETag 计为重传，序号更旧计为晚到通知，跨 0xffffff 回绕视为正常递增而不是设备重启；仅 serverEpoch 变化才按服务器重启重新订阅。分块请求回显最近响应的实际 szx，块号取响应块号 + 1（块号按响应尺寸解释），服务器收缩块尺寸时不按旧块号跳过字节。
+
+status() 以 phase 解释资料可用性：fresh（完整且在 Max-Age 内）、stale（完整但超 Max-Age 且无新通知）、collecting（分块未收齐）、empty（订阅有效但尚无通知）、cancelled（服务器 4.04 明确注销，与 stale 互相区别）。stop() 只以本资源自己的令牌发 observe=1 注销，不触碰其他资源订阅；已被服务器注销时不再重复注销。
